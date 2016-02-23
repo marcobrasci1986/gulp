@@ -1,0 +1,12 @@
+Install programs globally:
+----------------------
+npm install -g gulp bower
+
+gulp -v
+bower -v
+
+Install locally:
+-------------------
+npm install --save-dev package-name
+
+npm install gulp --save-dev
