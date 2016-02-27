@@ -16,7 +16,7 @@
 
         function activate() {
             return getCustomers().then(function() {
-                logger.info('Activated Dashboard');
+                logger.info('Activated Dashboard fsfs');
             });
         }
 
