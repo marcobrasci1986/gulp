@@ -1,10 +1,14 @@
 var gulp = require('gulp');
 var args = require('yargs').argv;
 var del = require('del');
-var config = require('./gulp.config')(); // () means execute immediately
+var config = require('./gulp.config')(); // () means execute immediately like IIFE
 
 var $ = require('gulp-load-plugins')({lazy: true});
 
+/**
+ * Run jshint and jscs on the provided src files.
+ * gulp vet
+ */
 gulp.task('vet', function () {
     log('Analyzing code');
     return gulp
@@ -17,16 +21,25 @@ gulp.task('vet', function () {
 });
 
 /**
- * Clean old css files before compiling LESS files
+ * Cleans css files in .tmp folder
+ *
+ * gulp clean-styles
  * */
 gulp.task('clean-styles', function (done) {
     var files = config.temp + '**/*.css';
     clean(files, done);
-
 });
 
 /**
- * Compile LESS to CSS (after cleaning old files)
+ * Compile LESS to CSS (after cleaning old files).
+ *
+ * 1. Find all files (provided in src)
+ * 2. register gulp-plumber: Prevent pipe breaking caused by errors from gulp plugins
+ * 3. Compile less to css
+ * 4. Automatically add prefixers
+ * 5. Copy generates files to dest folder (.tmp folder)
+ *
+ * It has a dependency on the task 'clean-styles'
  */
 gulp.task('styles', ['clean-styles'], function () {
     log('Compiling less --> CSS');
@@ -40,7 +53,9 @@ gulp.task('styles', ['clean-styles'], function () {
 });
 
 /**
- * Watch less files for changes
+ * Watch less files for changes.
+ *
+ * Every time you hit [control + s] the watcher is executed
  */
 gulp.task('less-watcher', function () {
     gulp.watch([config.less], ['styles']);
@@ -49,7 +64,7 @@ gulp.task('less-watcher', function () {
 /**
  * 1. get index.html file
  * 2. Find bower files in right order
- * 3. Find and inject custom js (first module files, then normal js, exclude spec files)
+ * 3. Find and inject custom js (first module files, then normal js, exclude spec files). See comments in index.html
  */
 gulp.task('wiredep', function () {
     log('Wire up the bower css js and our app js into the html');
@@ -65,6 +80,10 @@ gulp.task('wiredep', function () {
 
 /**
  * Inject custom css into html
+ *
+ * 1. Use wiredep to inject bower css and js
+ * 2. Compile less to css
+ * 3. Inject compiles css in html
  */
 gulp.task('inject', ['wiredep', 'styles'], function () {
     log('Wire up the app css into html, and after calling wiredep');
