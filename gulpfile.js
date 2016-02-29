@@ -10,6 +10,15 @@ var port = process.env.PORT || config.defaultPort;
 
 // start node-server: node src/server/app.js
 
+gulp.task('default',['help'],function () {
+
+});
+
+/**
+ * Prints tasks in gulpfile
+ */
+gulp.task('help', $.taskListing);
+
 /**
  * Run jshint and jscs on the provided src files.
  * gulp vet --verbose
@@ -34,6 +43,19 @@ gulp.task('clean-styles', function (done) {
     var files = config.temp + '**/*.css';
     clean(files, done);
 });
+gulp.task('clean-fonts', function (done) {
+    clean(config.build + 'fonts/**/*.*', done);
+});
+gulp.task('clean-images', function (done) {
+    clean(config.build + 'images/**/*.*', done);
+});
+
+gulp.task('clean' ,function (done) {
+    var deleteConfig = [].concat(config.build, config.temp);
+    log('Cleaning: ' + $.util.colors.blue(deleteConfig));
+    del(deleteConfig, done);
+
+});
 
 /**
  * Compile LESS to CSS (after cleaning old files).
@@ -55,6 +77,22 @@ gulp.task('styles', ['clean-styles'], function () {
         .pipe($.less())
         .pipe($.autoprefixer({browsers: ['last 2 version', '> 5%']}))
         .pipe(gulp.dest(config.temp));
+});
+
+gulp.task('fonts',['clean-fonts'], function () {
+    log('Copying fonts')
+    return gulp
+        .src(config.fonts)
+        .pipe(gulp.dest(config.build + 'fonts'));
+});
+
+gulp.task('images',['clean-images'], function () {
+    log('Copying and compressing images');
+
+    return gulp
+        .src(config.images)
+        .pipe($.imagemin({optimizationLevel: 4}))
+        .pipe(gulp.dest(config.build + 'images'));
 });
 
 /**
