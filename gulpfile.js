@@ -172,13 +172,17 @@ gulp.task('optimize', ['inject'], function () {
 
     return gulp.src(config.index)
         .pipe($.plumber())
-        .pipe($.inject(gulp.src(templateCache, {read: false}),{
+        .pipe($.inject(gulp.src(templateCache, {read: false}), {
             starttag: '<!-- inject:templates:js -->'
         }))
-        .pipe($.useref({ searchPath: './' }))
+        .pipe($.useref({searchPath: './'}))
         .pipe(gulp.dest(config.build));
 });
 
+
+gulp.task('serve-build', ['optimize'], function () {
+    serve(false);
+});
 /**
  * Nodemon.
  * Whenever you hit control + s in app.js for example. This tasks is executed. (example change port number in app.js)
@@ -186,8 +190,10 @@ gulp.task('optimize', ['inject'], function () {
  * 1. Prepare code, restart node-server
  */
 gulp.task('serve-dev', ['inject'], function () {
-    var isDev = true;
+    serve(true);
+});
 
+function serve(isDev) {
     var nodeOptions = {
         script: config.nodeServer,
         delayTime: 1,
@@ -212,7 +218,7 @@ gulp.task('serve-dev', ['inject'], function () {
         })
         .on('start', function () {
             log('*** nodemon started');
-            startBrowserSync();
+            startBrowserSync(isDev);
         })
         .on('crash', function () {
             log('*** nodemon crashed: script crashed for some reason');
@@ -220,7 +226,7 @@ gulp.task('serve-dev', ['inject'], function () {
         .on('exit', function () {
             log('*** nodemon exited cleanly');
         });
-});
+}
 
 
 ////////////////////////
@@ -232,7 +238,7 @@ function changeEvent(event) {
 /**
  * gulp serve-dev --nosync: disable browserSync
  **/
-function startBrowserSync() {
+function startBrowserSync(isDev) {
     if (args.nosync || browserSync.active) {
         return;
     }
@@ -240,10 +246,18 @@ function startBrowserSync() {
     log('Starting browser-sync on port ' + port);
 
 
-    gulp.watch([config.less], ['styles'])
-        .on('change', function (event) {
-            changeEvent(event);
-        });
+    if (isDev) {
+        gulp.watch([config.less], ['styles'])
+            .on('change', function (event) {
+                changeEvent(event);
+            });
+    }else{
+        gulp.watch([config.less, config.js, config.html], ['optimize', browserSync.reload])
+            .on('change', function (event) {
+                changeEvent(event);
+            });
+    }
+
 
     /**
      * localhost: 3000 in firefox, chrome ... -> browsers are linked
@@ -251,11 +265,11 @@ function startBrowserSync() {
     var options = {
         proxy: 'localhost:' + port,
         port: 3000,
-        files: [
+        files: isDev ? [
             config.client + '**/*.*', // everything in client folder + subfolder
             '!' + config.less, // ignore the .less files
             config.temp + '**/*.css' // watch .tmp/**/*.css
-        ],
+        ] : [],
         ghostMode: {
             clicks: true,
             location: false,
