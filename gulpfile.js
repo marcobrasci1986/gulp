@@ -7,7 +7,6 @@ var config = require('./gulp.config')(); // () means execute immediately like II
 var $ = require('gulp-load-plugins')({lazy: true});
 
 var port = process.env.PORT || config.defaultPort;
-
 // start node-server: node src/server/app.js
 
 gulp.task('default', ['help'], function () {
@@ -36,20 +35,27 @@ gulp.task('vet', function () {
 
 /**
  * Cleans css files in .tmp folder
- *
- * gulp clean-styles
- * */
+ */
 gulp.task('clean-styles', function (done) {
     var files = config.temp + '**/*.css';
     clean(files, done);
 });
+/**
+ * Cleans font in build folder
+ * */
 gulp.task('clean-fonts', function (done) {
     clean(config.build + 'fonts/**/*.*', done);
 });
+/**
+ * Cleans images in build folder
+ * */
 gulp.task('clean-images', function (done) {
     clean(config.build + 'images/**/*.*', done);
 });
 
+/**
+ * Cleans out temp and build folder
+ * */
 gulp.task('clean-code', function (done) {
     var files = [].concat(
         config.temp + "**/*.js",
@@ -57,7 +63,6 @@ gulp.task('clean-code', function (done) {
         config.build + "js/**/*.js",
         config.build + "styles/**/*.css"
     );
-
     clean(files, done);
 });
 
@@ -91,6 +96,9 @@ gulp.task('styles', ['clean-styles'], function () {
         .pipe(gulp.dest(config.temp));
 });
 
+/**
+ * Copy fonts into build folder
+ */
 gulp.task('fonts', ['clean-fonts'], function () {
     log('Copying fonts')
     return gulp
@@ -98,6 +106,9 @@ gulp.task('fonts', ['clean-fonts'], function () {
         .pipe(gulp.dest(config.build + 'fonts'));
 });
 
+/**
+ * Copy + compress images into build folder
+ */
 gulp.task('images', ['clean-images'], function () {
     log('Copying and compressing images');
 
@@ -128,8 +139,8 @@ gulp.task('wiredep', function () {
 
     return gulp
         .src(config.index)
-        .pipe(wiredep(options))
-        .pipe($.inject(gulp.src(config.js)))
+        .pipe(wiredep(options)) // inject bower
+        .pipe($.inject(gulp.src(config.js))) // inject custom js
         .pipe(gulp.dest(config.client));
 });
 
@@ -195,6 +206,7 @@ gulp.task('serve-dev', ['inject'], function () {
     serve(true);
 });
 
+////////////////////////
 function serve(isDev) {
     var nodeOptions = {
         script: config.nodeServer,
@@ -231,7 +243,6 @@ function serve(isDev) {
 }
 
 
-////////////////////////
 function changeEvent(event) {
     var srcPattern = new RegExp('/.*(?=/' + config.source + ')/');
     log('File ' + event.path.replace(srcPattern, '') + ' ' + event.type);
@@ -253,7 +264,7 @@ function startBrowserSync(isDev) {
             .on('change', function (event) {
                 changeEvent(event);
             });
-    }else{
+    } else {
         gulp.watch([config.less, config.js, config.html], ['optimize', browserSync.reload])
             .on('change', function (event) {
                 changeEvent(event);
