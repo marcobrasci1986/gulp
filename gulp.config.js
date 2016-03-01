@@ -19,7 +19,7 @@ module.exports = function () {
         css: temp + 'styles.css',
         fonts: './bower_components/font-awesome/fonts/**/*.*',
         images: client + 'images/**/*.*',
-
+        htmlTemplates: clientApp + '**/*.html',
         index: client + 'index.html',
         js: [
             clientApp + '**/*.module.js',
@@ -29,6 +29,20 @@ module.exports = function () {
         temp: temp,
         less: client + 'styles/styles.less',
         server: server,
+
+        /**
+         * template cache
+         */
+
+        templateCache: {
+            file: 'templates.js',
+            options: {
+                module: 'app.core',
+                root: 'app/',
+                standAlone: false
+            }
+        },
+
         /**
          * Browser sync
          */
