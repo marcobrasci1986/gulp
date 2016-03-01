@@ -165,7 +165,7 @@ gulp.task('inject', ['wiredep', 'styles', 'templatecache'], function () {
         .pipe(gulp.dest(config.client));
 });
 
-gulp.task('optimize', ['inject'], function () {
+gulp.task('optimize', ['inject', 'fonts', 'images'], function () {
     log('Optimizing js, css and html');
 
     var templateCache = config.temp + config.templateCache.file;
@@ -176,6 +176,8 @@ gulp.task('optimize', ['inject'], function () {
             starttag: '<!-- inject:templates:js -->'
         }))
         .pipe($.useref({searchPath: './'}))
+        .pipe($.if('**/*.js', $.uglify()))
+        .pipe($.if('**/*.css', $.csso()))
         .pipe(gulp.dest(config.build));
 });
 
