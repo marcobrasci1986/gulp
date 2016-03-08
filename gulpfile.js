@@ -58,10 +58,10 @@ gulp.task('clean-images', function (done) {
  * */
 gulp.task('clean-code', function (done) {
     var files = [].concat(
-        config.temp + "**/*.js",
-        config.build + "**/*.html",
-        config.build + "js/**/*.js",
-        config.build + "styles/**/*.css"
+        config.temp + '**/*.js',
+        config.build + '**/*.html',
+        config.build + 'js/**/*.js',
+        config.build + 'styles/**/*.css'
     );
     clean(files, done);
 });
@@ -100,14 +100,14 @@ gulp.task('styles', ['clean-styles'], function () {
  * Copy fonts into build folder
  */
 gulp.task('fonts', ['clean-fonts'], function () {
-    log('Copying fonts')
+    log('Copying fonts');
     return gulp
         .src(config.fonts)
         .pipe(gulp.dest(config.build + 'fonts'));
 });
 
 /**
- * Copy + compress images into build folder
+ * Copy + compressimages +  into build folder
  */
 gulp.task('images', ['clean-images'], function () {
     log('Copying and compressing images');
@@ -139,8 +139,8 @@ gulp.task('wiredep', function () {
 
     return gulp
         .src(config.index)
-        .pipe(wiredep(options)) // inject bower
-        .pipe($.inject(gulp.src(config.js))) // inject custom js
+        .pipe(wiredep(options))
+        .pipe($.inject(gulp.src(config.js)))
         .pipe(gulp.dest(config.client));
 });
 
@@ -157,7 +157,7 @@ gulp.task('templatecache', ['clean-code'], function () {
             config.templateCache.file,
             config.templateCache.options
         ))
-        .pipe(gulp.dest(config.temp))
+        .pipe(gulp.dest(config.temp));
 });
 
 /**
@@ -181,12 +181,14 @@ gulp.task('optimize', ['inject', 'fonts', 'images'], function () {
 
     var templateCache = config.temp + config.templateCache.file;
 
+
     return gulp.src(config.index)
         .pipe($.plumber())
         .pipe($.inject(gulp.src(templateCache, {read: false}), {
             starttag: '<!-- inject:templates:js -->'
         }))
         .pipe($.useref({searchPath: './'}))
+        .pipe($.if('**/app.js', $.ngAnnotate()))// Annotate before uglify, only app js
         .pipe($.if('**/*.js', $.uglify()))
         .pipe($.if('**/*.css', $.csso()))
         .pipe(gulp.dest(config.build));
@@ -206,7 +208,7 @@ gulp.task('serve-dev', ['inject'], function () {
     serve(true);
 });
 
-////////////////////////
+
 function serve(isDev) {
     var nodeOptions = {
         script: config.nodeServer,
@@ -243,6 +245,7 @@ function serve(isDev) {
 }
 
 
+////////////////////////
 function changeEvent(event) {
     var srcPattern = new RegExp('/.*(?=/' + config.source + ')/');
     log('File ' + event.path.replace(srcPattern, '') + ' ' + event.type);
