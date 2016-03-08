@@ -301,6 +301,13 @@ gulp.task('test', ['vet', 'templatecache'], function (done) {
     startTests(true, done);
 });
 
+/**
+ * Run tests on file modification
+ */
+gulp.task('autotest', ['vet', 'templatecache'], function (done) {
+    startTests(false, done);
+});
+
 
 ////////////////////////
 
