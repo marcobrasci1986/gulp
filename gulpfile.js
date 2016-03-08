@@ -191,6 +191,8 @@ gulp.task('optimize', ['inject', 'fonts', 'images'], function () {
         .pipe($.if('**/app.js', $.ngAnnotate()))// Annotate before uglify, only app js
         .pipe($.if('**/*.js', $.uglify()))
         .pipe($.if('**/*.css', $.csso()))
+        .pipe($.if(['**/*.js', '**/*.css'], $.rev()))// app.js -> app-48494894.js --> only target js and css files
+        .pipe($.revReplace())
         .pipe(gulp.dest(config.build));
 });
 
