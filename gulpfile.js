@@ -1,6 +1,8 @@
 var gulp = require('gulp');
 var args = require('yargs').argv;
 var del = require('del');
+var _ = require('lodash');
+var path = require('path');
 var browserSync = require('browser-sync');
 var config = require('./gulp.config')(); // () means execute immediately like IIFE
 
@@ -176,7 +178,20 @@ gulp.task('inject', ['wiredep', 'styles', 'templatecache'], function () {
         .pipe(gulp.dest(config.client));
 });
 
-gulp.task('optimize', ['inject', 'fonts', 'images'], function () {
+gulp.task('build', ['optimize', 'images', 'fonts'], function () {
+    log('Building everything');
+
+    var msg = {
+        title: 'gulp build',
+        subtitle: 'Deployed to the build folder',
+        message: 'Running gulp serve-build'
+    };
+    del(config.temp);
+    log(msg);
+    notify(msg);
+});
+
+gulp.task('optimize', ['inject', 'test'], function () {
     log('Optimizing js, css and html');
 
     var templateCache = config.temp + config.templateCache.file;
@@ -193,11 +208,46 @@ gulp.task('optimize', ['inject', 'fonts', 'images'], function () {
         .pipe($.if('**/*.css', $.csso()))
         .pipe($.if(['**/*.js', '**/*.css'], $.rev()))// app.js -> app-48494894.js --> only target js and css files
         .pipe($.revReplace())
+        .pipe(gulp.dest(config.build))
+        .pipe($.rev.manifest())
         .pipe(gulp.dest(config.build));
 });
 
+/**
+ * Bump the version
+ * --type=pre will bump the prerelease version *.*.*-x
+ * --type=patch or no flag will bump the patch version *.*.x
+ * --type=minor will bump the minor version *.x.*
+ * --type=major will bump the major version x.*.*
+ * --version=1.2.3 will bump to a specific version and ignore other flags
+ *
+ * gulp bump --version=2.3.4
+ * gulp bump --type=minor
+ */
+gulp.task('bump', function () {
+    var msg = 'Bumping version';
+    var type = args.type;
+    var version = args.version;
 
-gulp.task('serve-build', ['optimize'], function () {
+    var options = {};
+    if (version) {
+        options.version = version;
+        msg += ' to ' + version;
+    } else {
+        options.type = type;
+        msg += ' for a ' + type;
+    }
+    log(msg);
+
+    return gulp
+        .src(config.packages)
+        .pipe($.print())
+        .pipe($.bump(options))
+        .pipe(gulp.dest(config.root));
+});
+
+
+gulp.task('serve-build', ['build'], function () {
     serve(false);
 });
 /**
@@ -247,7 +297,34 @@ function serve(isDev) {
 }
 
 
+gulp.task('test', ['vet', 'templatecache'], function (done) {
+    startTests(true, done);
+});
+
+
 ////////////////////////
+
+function startTests(singleRun, done) {
+    var karma = require('karma').server;
+    var excludeFiles = [];
+    var serverSpecs = config.serverIntegrationSpecs;
+    excludeFiles = serverSpecs;
+
+    karma.start({
+        configFile: __dirname + '/karma.conf.js',
+        exclude: excludeFiles,
+        singleRun: !!singleRun
+    }, karmaCompleted);
+
+    function karmaCompleted(karmaResult) {
+        log('Karma completed');
+        if (karmaResult === 1) {
+            done('karma: tests failed with code ' + karmaResult);
+        } else {
+            done();
+        }
+    }
+}
 function changeEvent(event) {
     var srcPattern = new RegExp('/.*(?=/' + config.source + ')/');
     log('File ' + event.path.replace(srcPattern, '') + ' ' + event.type);
@@ -312,4 +389,15 @@ function clean(path, done) {
 }
 function log(msg) {
     $.util.log($.util.colors.blue(msg));
+}
+
+function notify(options) {
+    var notifier = require('node-notifier');
+    var notifyOptions = {
+        sound: 'Bottle',
+        contentImage: path.join(__dirname, 'gulp.png'),
+        icon: path.join(__dirname, 'gulp.png')
+    };
+    _.assign(notifyOptions, options);
+    notifier.notify(notifyOptions);
 }
